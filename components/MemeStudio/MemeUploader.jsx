@@ -26,67 +26,56 @@ export default function MemeUploader({
 
   return (
     <div className="w-full">
-      {/* If Image Uploaded */}
       {currentFile && previewUrl ? (
-        // 🎨 IMPROVEMENT 1: Refined preview frame with shadow and strong rounding
-        <div className="relative w-full h-56 sm:h-64 rounded-2xl overflow-hidden border border-border/60 shadow-xl bg-card/50 backdrop-blur-md group transition-all duration-300">
+        <div className="relative w-full h-44 sm:h-52 rounded-xl overflow-hidden border border-border/40 shadow-lg bg-card/40 backdrop-blur-sm group transition-all duration-200">
           <img
             src={previewUrl}
             alt="Uploaded preview"
-            // 🎨 IMPROVEMENT 2: Consistent object-contain for visual clarity
             className="w-full h-full object-contain bg-muted"
           />
 
-          {/* Remove Button */}
           <Button
             variant="destructive"
             size="icon"
-            // 🎨 IMPROVEMENT 3: Larger, more visible close button
-            className="absolute top-4 right-4 h-9 w-9 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-300 shadow-xl"
+            className="absolute top-3 right-3 h-8 w-8 rounded-full opacity-0 group-hover:opacity-100 transition-all duration-200 shadow-md"
             onClick={(e) => {
               e.stopPropagation();
               onClear();
             }}
           >
-            <XCircle className="h-5 w-5" />
+            <XCircle className="h-4 w-4" />
           </Button>
 
-          {/* Glass overlay hover */}
-          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/10 transition-colors"></div>
+          <div className="absolute inset-0 bg-black/0 group-hover:bg-black/5 transition-colors"></div>
         </div>
       ) : (
-        /* No Image — Dropzone */
-        // 🎨 IMPROVEMENT 4: Dynamic styling for drag activation
         <div
           {...getRootProps()}
-          className={`relative w-full h-56 sm:h-64 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed transition-all duration-300 cursor-pointer
+          className={`relative w-full h-44 sm:h-52 flex flex-col items-center justify-center rounded-xl border-2 border-dashed transition-all duration-200 cursor-pointer
             ${
               isDragActive
-                ? "border-primary bg-primary/10 shadow-lg scale-[1.01]"
-                : "border-muted-foreground/40 bg-card/40 backdrop-blur-sm hover:border-primary/50"
+                ? "border-primary bg-primary/10 shadow-md scale-[1.01]"
+                : "border-muted-foreground/30 bg-card/30 backdrop-blur-sm hover:border-primary/40"
             }
           `}
         >
           <input {...getInputProps()} />
 
-          <div
-            className={`transition-transform duration-300 ${
-              isDragActive ? "scale-110" : "scale-100"
-            }`}
-          >
+          <div className={`transition-transform duration-200 ${isDragActive ? "scale-110" : "scale-100"}`}>
             {isDragActive ? (
-              // 🎨 IMPROVEMENT 5: Prominent bounce animation for drop cue
-              <UploadCloud className="h-12 w-12 text-primary animate-bounce" />
+              <UploadCloud className="h-10 w-10 text-primary animate-pulse" />
             ) : (
-              <ImageIcon className="h-10 w-10 text-muted-foreground opacity-70" />
+              <ImageIcon className="h-9 w-9 text-muted-foreground/70" />
             )}
           </div>
 
-          <p className="mt-3 text-lg font-semibold text-foreground">
+          <p className="mt-2 text-sm font-medium text-foreground">
             {isDragActive ? "Drop the file here!" : "Click or drag & drop an image"}
           </p>
 
-          <p className="text-xs text-muted-foreground/60 mt-1">JPG, PNG, GIF, WEBP supported</p>
+          <p className="text-[10px] text-muted-foreground/60 mt-0.5">
+            JPG, PNG, GIF, WEBP supported
+          </p>
         </div>
       )}
     </div>

@@ -1,7 +1,6 @@
 "use client";
 
 import { ImageIcon } from "lucide-react";
-import { cn } from "@/lib/utils"; // optional if you use shadcn utils
 
 export default function MemePreview({
   previewUrl,
@@ -11,91 +10,83 @@ export default function MemePreview({
   topTextStyle,
   bottomTextStyle,
 }) {
+  // fallback styles if props missing
+  const safeTop = topTextStyle || { fontSize: 60, color: "#FFFFFF", textAlign: "center" };
+  const safeBottom = bottomTextStyle || { fontSize: 60, color: "#FFFFFF", textAlign: "center" };
 
-  // 🎨 IMPROVEMENT 1: Refined base styles for classic meme font look
+  const outline = `
+      2px 2px 0 #000,
+      -2px -2px 0 #000,
+      2px -2px 0 #000,
+      -2px 2px 0 #000,
+      3px 0 0 #000,
+      -3px 0 0 #000,
+      0 3px 0 #000,
+      0 -3px 0 #000
+  `;
+
   const baseTextStyle = {
     fontFamily: "Impact, sans-serif",
-    // Black border/outline
-    textShadow:
-      "3px 3px 0 #000, -3px -3px 0 #000, 3px -3px 0 #000, -3px 3px 0 #000, 4px 0 0 #000, -4px 0 0 #000, 0 4px 0 #000, 0 -4px 0 #000",
+    textShadow: outline,
+    WebkitTextStroke: "1.5px black",
     letterSpacing: "1px",
-    lineHeight: "1.1",
-    // Fallback for some browsers (though TextShadow is usually better)
-    WebkitTextStroke: "2px black", 
+    lineHeight: "1.05",
     width: "100%",
     wordWrap: "break-word",
     pointerEvents: "none",
+    padding: "0 8px",
   };
 
   const currentTopTextStyle = {
     ...baseTextStyle,
-    // Note: Using 'vmax' ensures the text scales relative to the viewport size
-    fontSize: `${topTextStyle.fontSize / 10}vmax`, 
-    color: topTextStyle.color,
-    textAlign: topTextStyle.textAlign,
+    fontSize: `${(safeTop.fontSize ?? 60) / 11}vmax`,
+    color: safeTop.color ?? "#FFFFFF",
+    textAlign: safeTop.textAlign ?? "center",
   };
 
   const currentBottomTextStyle = {
     ...baseTextStyle,
-    fontSize: `${bottomTextStyle.fontSize / 10}vmax`,
-    color: bottomTextStyle.color,
-    textAlign: bottomTextStyle.textAlign,
+    fontSize: `${(safeBottom.fontSize ?? 60) / 11}vmax`,
+    color: safeBottom.color ?? "#FFFFFF",
+    textAlign: safeBottom.textAlign ?? "center",
   };
 
   return (
     <div className="w-full space-y-3">
-      
-      {/* Outer Card Frame */}
       <div
         className="
-          relative w-full aspect-square overflow-hidden 
+          relative w-full aspect-square overflow-hidden
           rounded-3xl border bg-black 
-          border-border/60
-          shadow-2xl hover:shadow-[0_0_50px_rgba(0,0,0,0.8)]
-          transition-all duration-300 
+          border-border/60 shadow-2xl
+          transition-all duration-300
         "
       >
-        {/* Empty State */}
         {!previewUrl ? (
           <div className="flex h-full flex-col items-center justify-center text-center p-10">
-            <div className="flex flex-col items-center animate-fadeIn">
-              <ImageIcon className="h-20 w-20 mb-4 opacity-40 text-muted-foreground" />
-              <p className="text-xl font-bold text-muted-foreground/80">
-                Your Meme Will Appear Here
-              </p>
-              <p className="text-sm text-muted-foreground/60 mt-2">
-                Upload an image in the controls panel to begin
-              </p>
-            </div>
+            <ImageIcon className="h-20 w-20 mb-4 opacity-40 text-muted-foreground" />
+            <p className="text-xl font-bold text-muted-foreground/80">
+              Your Meme Will Appear Here
+            </p>
+            <p className="text-sm text-muted-foreground/60 mt-2">
+              Upload an image to begin
+            </p>
           </div>
         ) : (
-          /* Preview Container */
-          <div
-            className="
-              relative w-full h-full animate-fadeIn
-              transition-transform duration-300 hover:scale-[1.01]
-            "
-          >
-            {/* The Image */}
+          <div className="relative w-full h-full animate-fadeIn">
             <img
               src={previewUrl}
-              alt="Meme Preview"
-              className="
-                w-full h-full object-contain bg-black 
-                pointer-events-none select-none
-              "
+              alt="meme preview"
+              className="w-full h-full object-contain bg-black pointer-events-none select-none"
             />
 
-            {/* 🎨 IMPROVEMENT 2: Subtle gradient for improved text contrast */}
-            <div className="absolute inset-0 bg-gradient-to-b from-black/20 via-transparent to-black/20"></div>
+            <div className="absolute inset-0 bg-gradient-to-b from-black/25 via-transparent to-black/25" />
 
-            {/* Top & Bottom Text */}
-            {/* 🎨 IMPROVEMENT 3: Increased padding for better text margin */}
-            <div className="absolute inset-0 flex flex-col justify-between p-6 sm:p-8 lg:p-10">
-              <h2 className="uppercase font-extrabold text-white text-shadow-black" style={currentTopTextStyle}>
+            <div className="absolute inset-0 flex flex-col justify-between py-6 sm:py-8">
+              <h2 className="uppercase font-extrabold text-white" style={currentTopTextStyle}>
                 {topText}
               </h2>
-              <h2 className="uppercase font-extrabold text-white text-shadow-black" style={currentBottomTextStyle}>
+
+              <h2 className="uppercase font-extrabold text-white" style={currentBottomTextStyle}>
                 {bottomText}
               </h2>
             </div>
@@ -103,7 +94,6 @@ export default function MemePreview({
         )}
       </div>
 
-      {/* Hidden Canvas (for Download Only) */}
       <canvas ref={canvasRef} className="hidden" />
     </div>
   );

@@ -1,10 +1,10 @@
 "use client";
 
-import MemeStudio from "@/components/MemeStudio";
+import MemeStudio from "@/components/MemeStudio/MemeStudio";
 
 export default function Home() {
   return (
-    <main className="p-6">
+    <main >
       <MemeStudio />
     </main>
   );

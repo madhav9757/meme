@@ -8,12 +8,12 @@ import {
   CardTitle,
   CardDescription,
 } from "@/components/ui/card";
-import MemeUploader from "./MemeUploader";
+// Assuming these child components exist and are functional
+import MemeUploader from "./MemeUploader"; 
 import MemeTextInput from "./MemeTextInput";
 import MemeControls from "./MemeControls";
 import MemePreview from "./MemePreview";
-// 💥 NEW IMPORT: Import the separated Navbar component
-import MemeNavbar from "./MemeNavbar"; 
+import MemeNavbar from "./MemeNavbar";
 
 export default function MemeStudio() {
   const [file, setFile] = useState(null);
@@ -80,95 +80,161 @@ export default function MemeStudio() {
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground overflow-x-hidden bg-gradient-to-br from-gray-50 via-background to-gray-100 dark:from-zinc-900 dark:via-background dark:to-zinc-950">
-      
-      {/* 💥 NEW COMPONENT: Using the separate MemeNavbar */}
+    // REVISION 1: Enhanced background for better visual depth
+    <div className="min-h-screen bg-background text-foreground overflow-hidden">
       <MemeNavbar />
 
-      {/* MAIN GRID */}
-      <div className="max-w-screen-2xl mx-auto p-6 md:p-10 grid grid-cols-1 lg:grid-cols-[1.2fr_2fr_1.2fr] gap-8 mt-10">
+      {/* REVISION 2: Improved Main Grid Layout (responsive, better proportions) */}
+      <div className="w-full h-[calc(100vh-68px)] max-w-screen-xl mx-auto p-4 md:p-6 lg:grid lg:grid-cols-[300px_1fr_330px] lg:gap-8 flex flex-col lg:flex-row mt-0">
         
-        {/* LEFT: Upload + AI Controls */}
-        <Card className="shadow-2xl border-primary/20 bg-card/75 backdrop-blur-xl rounded-3xl lg:sticky lg:top-24">
-          <CardHeader>
-            <CardTitle className="text-xl font-bold text-primary">📤 Image & AI</CardTitle>
-            <CardDescription>
-              Upload an image and generate smart captions.
-            </CardDescription>
-          </CardHeader>
+        {/* LEFT PANEL */}
+        <div className="hidden lg:block h-full overflow-y-auto pr-2 pb-6">
+          {/* REVISION 3: More subtle card styling for a clean look */}
+          <Card className="shadow-2xl border-2 border-border/50 bg-card/70 backdrop-blur-md rounded-xl sticky top-6">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xl font-extrabold text-primary flex items-center gap-2">
+                <span role="img" aria-label="upload">📤</span> Image & AI
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Upload an image and generate smart captions.
+              </CardDescription>
+            </CardHeader>
 
-          <CardContent className="space-y-8">
-            <div>
-              <h2 className="text-lg font-semibold mb-3">Upload Image</h2>
-              <MemeUploader
-                currentFile={file}
-                previewUrl={previewUrl}
-                onFileSelect={handleFileChange}
-                onClear={handleClearImage}
-              />
-            </div>
+            <CardContent className="space-y-6">
+              <div>
+                <h2 className="text-base font-semibold mb-2 text-muted-foreground">Image Source</h2>
+                <MemeUploader
+                  currentFile={file}
+                  previewUrl={previewUrl}
+                  onFileSelect={handleFileChange}
+                  onClear={handleClearImage}
+                />
+              </div>
 
-            <div className="pt-4 border-t border-border">
-              <h2 className="text-lg font-semibold mb-3">AI Options</h2>
-              <MemeControls
-                file={file}
-                isSmartMode={isSmartMode}
-                setSmartMode={setIsSmartMode}
-                onCaptionsGenerated={setAiCaptions}
-                previewUrl={previewUrl}
-                topText={topText}
-                bottomText={bottomText}
-                canvasRef={canvasRef}
-                topTextStyle={topTextStyle}
-                bottomTextStyle={bottomTextStyle}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        {/* CENTER: Preview */}
-        <div className="flex flex-col items-center p-4 rounded-3xl bg-card/80 shadow-2xl border border-primary/20 backdrop-blur-2xl">
-          <MemePreview
-            previewUrl={previewUrl}
-            topText={topText}
-            bottomText={bottomText}
-            canvasRef={canvasRef}
-            topTextStyle={topTextStyle}
-            bottomTextStyle={bottomTextStyle}
-          />
-
-          {!previewUrl && (
-            <p className="text-muted-foreground text-lg mt-6 text-center animate-pulse">
-              Your meme preview will appear here.
-            </p>
-          )}
+              <div className="pt-4 border-t border-border/70">
+                <h2 className="text-base font-semibold mb-2 text-muted-foreground">AI Generator</h2>
+                <MemeControls
+                  file={file}
+                  isSmartMode={isSmartMode}
+                  setSmartMode={setIsSmartMode}
+                  onCaptionsGenerated={setAiCaptions}
+                  previewUrl={previewUrl}
+                  topText={topText}
+                  bottomText={bottomText}
+                  canvasRef={canvasRef}
+                  topTextStyle={topTextStyle}
+                  bottomTextStyle={bottomTextStyle}
+                />
+              </div>
+            </CardContent>
+          </Card>
         </div>
 
-        {/* RIGHT: Text Editing */}
-        <Card className="shadow-2xl border-primary/20 bg-card/75 backdrop-blur-xl rounded-3xl lg:sticky lg:top-24">
-          <CardHeader>
-            <CardTitle className="text-xl font-bold text-primary">✍️ Captions & Style</CardTitle>
-            <CardDescription>
-              Add or edit text for your meme and adjust its appearance.
-            </CardDescription>
-          </CardHeader>
-
-          <CardContent className="space-y-8">
-            <MemeTextInput
+        {/* CENTER PREVIEW (Main Focus) */}
+        <div className="lg:h-full flex items-center justify-center py-4 lg:py-0 w-full flex-shrink-0">
+          {/* REVISION 4: Preview Container with stronger focus styling */}
+          <div className="w-full max-w-[640px] aspect-square rounded-2xl bg-gray-50/10 dark:bg-zinc-900/40 shadow-2xl shadow-primary/20 border-4 border-primary/20 p-4 relative flex items-center justify-center overflow-hidden">
+            <MemePreview
+              previewUrl={previewUrl}
               topText={topText}
-              onTopChange={setTopText}
               bottomText={bottomText}
-              onBottomChange={setBottomText}
-              aiCaptions={aiCaptions}
+              canvasRef={canvasRef}
               topTextStyle={topTextStyle}
-              setTopTextStyle={setTopTextStyle}
               bottomTextStyle={bottomTextStyle}
-              setBottomTextStyle={setBottomTextStyle}
-              onSwapText={handleSwapText}
-              onResetStyles={resetTextStyles}
             />
-          </CardContent>
-        </Card>
+
+            {!previewUrl && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-card/95 backdrop-blur-sm">
+                <svg
+                  className="w-16 h-16 text-primary/50 mb-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.5"
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  ></path>
+                </svg>
+                <p className="text-xl font-medium text-muted-foreground text-center">
+                  Start by Uploading an Image
+                </p>
+                <p className="text-sm text-muted-foreground/80 mt-1">
+                  Use the panel on the left to select your meme template.
+                </p>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {/* RIGHT PANEL (Editor Controls) */}
+        <div className="lg:h-full overflow-y-auto pl-2 pb-6 flex-shrink-0 w-full lg:w-auto">
+          {/* REVISION 3: More subtle card styling for a clean look */}
+          <Card className="shadow-2xl border-2 border-border/50 bg-card/70 backdrop-blur-md rounded-xl sticky top-6">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xl font-extrabold text-primary flex items-center gap-2">
+                <span role="img" aria-label="write">✍️</span> Captions & Style
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Add or edit text and adjust its appearance.
+              </CardDescription>
+            </CardHeader>
+
+            <CardContent className="space-y-6">
+              <MemeTextInput
+                topText={topText}
+                onTopChange={setTopText}
+                bottomText={bottomText}
+                onBottomChange={setBottomText}
+                aiCaptions={aiCaptions}
+                topTextStyle={topTextStyle}
+                setTopTextStyle={setTopTextStyle}
+                bottomTextStyle={bottomTextStyle}
+                setBottomTextStyle={setBottomTextStyle}
+                onSwapText={handleSwapText}
+                onResetStyles={resetTextStyles}
+              />
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* Mobile/Tablet Fallback for Left Panel: Display at the top */}
+        <div className="lg:hidden w-full order-first">
+            {/* Same card content but outside the main grid for mobile flow */}
+            <Card className="shadow-lg border-2 border-border/50 bg-card/80 backdrop-blur-sm rounded-xl mb-4">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg font-bold text-primary flex items-center gap-2">
+                    <span role="img" aria-label="upload">📤</span> Image & AI
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                    <MemeUploader
+                        currentFile={file}
+                        previewUrl={previewUrl}
+                        onFileSelect={handleFileChange}
+                        onClear={handleClearImage}
+                    />
+                    <div className="pt-3 border-t border-border/50">
+                        <MemeControls
+                            file={file}
+                            isSmartMode={isSmartMode}
+                            setSmartMode={setIsSmartMode}
+                            onCaptionsGenerated={setAiCaptions}
+                            previewUrl={previewUrl}
+                            topText={topText}
+                            bottomText={bottomText}
+                            canvasRef={canvasRef}
+                            topTextStyle={topTextStyle}
+                            bottomTextStyle={bottomTextStyle}
+                        />
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
+
       </div>
     </div>
   );

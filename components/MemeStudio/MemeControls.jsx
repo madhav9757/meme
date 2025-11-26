@@ -1,227 +1,235 @@
 "use client";
 
-import { useState } from "react";
-import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
+import { useState, useRef } from "react";
 import {
-  Wand2,
-  Download,
-  Loader2,
-  BrainCircuit,
-} from "lucide-react";
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import MemeUploader from "./MemeUploader";
+import MemeTextInput from "./MemeTextInput";
+import MemeControls from "./MemeControls";
+import MemePreview from "./MemePreview";
+import MemeNavbar from "./MemeNavbar";
 
-const toBase64 = (file) =>
-  new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = () => resolve(reader.result);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
+export default function MemeStudio() {
+  const [file, setFile] = useState(null);
+  const [previewUrl, setPreviewUrl] = useState(null);
+
+  const [topText, setTopText] = useState("");
+  const [bottomText, setBottomText] = useState("");
+  const [aiCaptions, setAiCaptions] = useState([]);
+
+  const [topTextStyle, setTopTextStyle] = useState({
+    fontSize: 60,
+    color: "#FFFFFF",
+    textAlign: "center",
+  });
+  const [bottomTextStyle, setBottomTextStyle] = useState({
+    fontSize: 60,
+    color: "#FFFFFF",
+    textAlign: "center",
   });
 
-export default function MemeControls({
-  file,
-  isSmartMode,
-  setSmartMode,
-  onCaptionsGenerated,
-  previewUrl,
-  topText,
-  bottomText,
-  canvasRef,
-  topTextStyle,
-  bottomTextStyle,
-}) {
-  const [loading, setLoading] = useState(false);
+  const [isSmartMode, setIsSmartMode] = useState(false);
+  const canvasRef = useRef(null);
 
-  /* -------------------------------------- */
-  /*  AI Caption Generator                  */
-  /* -------------------------------------- */
-  const handleGenerate = async () => {
-    if (!file) {
-      alert("Please upload an image first!");
-      return;
-    }
+  const handleFileChange = (newFile) => {
+    if (file && previewUrl) URL.revokeObjectURL(previewUrl);
+    setFile(newFile);
 
-    setLoading(true);
-    onCaptionsGenerated([]);
-
-    try {
-      const base64 = await toBase64(file);
-
-      const res = await fetch("/api/meme-ai", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          image: base64.split(",")[1],
-          fileType: file.type,
-          prompt: "Generate 5 funny meme captions.",
-          useReasoning: isSmartMode,
-        }),
-      });
-
-      const data = await res.json();
-      if (data.captions) {
-        onCaptionsGenerated(data.captions);
-      } else {
-        alert(`AI Error: ${data.error}`);
-      }
-    } catch (error) {
-      console.error(error);
-      alert("Something went wrong while generating captions.");
-    } finally {
-      setLoading(false);
+    if (newFile) {
+      setPreviewUrl(URL.createObjectURL(newFile));
+      setAiCaptions([]);
+    } else {
+      setPreviewUrl(null);
     }
   };
 
-  /* -------------------------------------- */
-  /*  Download Meme                         */
-  /* -------------------------------------- */
-  const handleDownload = () => {
-    if (!previewUrl) {
-      alert("Upload an image first!");
-      return;
-    }
+  const handleClearImage = () => {
+    if (file && previewUrl) URL.revokeObjectURL(previewUrl);
+    setFile(null);
+    setPreviewUrl(null);
+    setTopText("");
+    setBottomText("");
+    setAiCaptions([]);
 
-    const canvas = canvasRef.current;
-    if (!canvas) return;
+    setTopTextStyle({ fontSize: 60, color: "#FFFFFF", textAlign: "center" });
+    setBottomTextStyle({
+      fontSize: 60,
+      color: "#FFFFFF",
+      textAlign: "center",
+    });
+  };
 
-    const img = new Image();
-    img.crossOrigin = "anonymous";
-    img.src = previewUrl;
+  const handleSwapText = () => {
+    setTopText(bottomText);
+    setBottomText(topText);
+  };
 
-    img.onload = () => {
-      const ctx = canvas.getContext("2d");
-
-      const aspectRatio = img.width / img.height;
-      const maxWidth = 800;
-      const maxHeight = 800;
-      let canvasWidth = img.width;
-      let canvasHeight = img.height;
-
-      if (canvasWidth > maxWidth) {
-        canvasWidth = maxWidth;
-        canvasHeight = canvasWidth / aspectRatio;
-      }
-      if (canvasHeight > maxHeight) {
-        canvasHeight = maxHeight;
-        canvasWidth = canvasHeight * aspectRatio;
-      }
-
-      canvas.width = canvasWidth;
-      canvas.height = canvasHeight;
-
-      ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-
-      const margin = canvas.width * 0.03;
-      const outline = canvas.width * 0.008;
-
-      const drawStyledText = (text, style, isTop) => {
-        if (!text) return;
-
-        const scaledSize = style.fontSize * (canvas.width / 800);
-        // 🎨 Note: The impact font needs to be available in the browser/canvas environment
-        ctx.font = `${scaledSize}px Impact`; 
-        ctx.fillStyle = style.color;
-        ctx.strokeStyle = "black";
-        ctx.lineWidth = outline;
-
-        ctx.textAlign = style.textAlign;
-        ctx.textBaseline = isTop ? "top" : "bottom";
-
-        const x =
-          style.textAlign === "left"
-            ? margin
-            : style.textAlign === "right"
-            ? canvas.width - margin
-            : canvas.width / 2;
-
-        const y = isTop ? margin : canvas.height - margin;
-
-        // Draw outline then fill for classic meme effect
-        ctx.strokeText(text.toUpperCase(), x, y);
-        ctx.fillText(text.toUpperCase(), x, y);
-      };
-
-      drawStyledText(topText, topTextStyle, true);
-      drawStyledText(bottomText, bottomTextStyle, false);
-
-      const link = document.createElement("a");
-      link.download = "my-ai-meme.png";
-      link.href = canvas.toDataURL("image/png");
-      link.click();
-    };
+  const resetTextStyles = () => {
+    setTopTextStyle({ fontSize: 60, color: "#FFFFFF", textAlign: "center" });
+    setBottomTextStyle({
+      fontSize: 60,
+      color: "#FFFFFF",
+      textAlign: "center",
+    });
   };
 
   return (
-    <div className="space-y-6">
+    // Removed 'overflow-x-hidden' from main div to allow the browser to manage general scrolling if panels exceed viewport height
+    <div className="min-h-screen bg-background text-foreground">
+      <MemeNavbar />
 
-      {/* SMART MODE CARD */}
-      {/* 🎨 IMPROVEMENT 1: Subtle hover, stronger border, and shadow-inner for depth */}
-      <div className="p-4 rounded-xl border border-border/50 bg-card/50 backdrop-blur-md shadow-inner flex items-center justify-between hover:border-primary/50 transition-all duration-300">
+      {/* Main 3-column editor grid. Removed 'h-[calc(97vh-64px)]' to allow vertical content flow */}
+      <div className="w-full max-w-screen-xl mx-auto p-4 md:p-6 lg:grid lg:grid-cols-[300px_1fr_330px] lg:gap-8 flex flex-col lg:flex-row mt-0">
+        
+        {/* LEFT PANEL: REMOVED h-full and overflow-y-auto */}
+        <div className="hidden lg:block pr-2 pb-6"> 
+          <Card className="shadow-2xl border-2 border-border/50 bg-card/70 backdrop-blur-md rounded-xl sticky top-6">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xl font-extrabold text-primary flex items-center gap-2">
+                <span role="img" aria-label="upload">📤</span> Image & AI
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Upload an image and generate smart captions.
+              </CardDescription>
+            </CardHeader>
 
-        <div className="flex items-start gap-3">
-          <div className="p-2 rounded-lg bg-primary/10">
-            <BrainCircuit
-              className={`h-5 w-5 ${
-                isSmartMode ? "text-primary" : "text-muted-foreground"
-              }`}
+            <CardContent className="space-y-6">
+              <div>
+                <h2 className="text-base font-semibold mb-2 text-muted-foreground">Image Source</h2>
+                <MemeUploader
+                  currentFile={file}
+                  previewUrl={previewUrl}
+                  onFileSelect={handleFileChange}
+                  onClear={handleClearImage}
+                />
+              </div>
+
+              <div className="pt-4 border-t border-border/70">
+                <h2 className="text-base font-semibold mb-2 text-muted-foreground">AI Generator</h2>
+                <MemeControls
+                  file={file}
+                  isSmartMode={isSmartMode}
+                  setSmartMode={setIsSmartMode}
+                  onCaptionsGenerated={setAiCaptions}
+                  previewUrl={previewUrl}
+                  topText={topText}
+                  bottomText={bottomText}
+                  canvasRef={canvasRef}
+                  topTextStyle={topTextStyle}
+                  bottomTextStyle={bottomTextStyle}
+                />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        {/* CENTER PREVIEW: Ensure height is controlled by content, but keep alignment */}
+        <div className="lg:h-full flex items-center justify-center py-4 lg:py-0 w-full flex-shrink-0">
+          <div className="w-full max-w-[640px] aspect-square rounded-2xl bg-gray-50/10 dark:bg-zinc-900/40 shadow-2xl shadow-primary/20 border-4 border-primary/20 p-4 relative flex items-center justify-center overflow-hidden">
+            <MemePreview
+              previewUrl={previewUrl}
+              topText={topText}
+              bottomText={bottomText}
+              canvasRef={canvasRef}
+              topTextStyle={topTextStyle}
+              bottomTextStyle={bottomTextStyle}
             />
-          </div>
 
-          <div>
-            {/* 🎨 IMPROVEMENT 2: Use strong font for readability */}
-            <Label className="font-semibold text-base">Smart Mode</Label>
-            <p className="text-xs text-muted-foreground">
-              Slower but generates smarter captions.
-            </p>
+            {!previewUrl && (
+              <div className="absolute inset-0 flex flex-col items-center justify-center p-8 bg-card/95 backdrop-blur-sm">
+                <svg
+                  className="w-16 h-16 text-primary/50 mb-4"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="1.5"
+                    d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"
+                  ></path>
+                </svg>
+                <p className="text-xl font-medium text-muted-foreground text-center">
+                  Start by Uploading an Image
+                </p>
+                <p className="text-sm text-muted-foreground/80 mt-1">
+                  Use the panel on the left to select your meme template.
+                </p>
+              </div>
+            )}
           </div>
         </div>
 
-        <Switch checked={isSmartMode} onCheckedChange={setSmartMode} />
-      </div>
+        {/* RIGHT PANEL: REMOVED h-full and overflow-y-auto */}
+        <div className="pl-2 pb-6 flex-shrink-0 w-full lg:w-auto">
+          <Card className="shadow-2xl border-2 border-border/50 bg-card/70 backdrop-blur-md rounded-xl sticky top-6">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-xl font-extrabold text-primary flex items-center gap-2">
+                <span role="img" aria-label="write">✍️</span> Captions & Style
+              </CardTitle>
+              <CardDescription className="text-sm">
+                Add or edit text and adjust its appearance.
+              </CardDescription>
+            </CardHeader>
 
-      {/* BUTTON ROW */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <CardContent className="space-y-6">
+              <MemeTextInput
+                topText={topText}
+                onTopChange={setTopText}
+                bottomText={bottomText}
+                onBottomChange={setBottomText}
+                aiCaptions={aiCaptions}
+                topTextStyle={topTextStyle}
+                setTopTextStyle={setTopTextStyle}
+                bottomTextStyle={bottomTextStyle}
+                setBottomTextStyle={setBottomTextStyle}
+                onSwapText={handleSwapText}
+                onResetStyles={resetTextStyles}
+              />
+            </CardContent>
+          </Card>
+        </div>
+        
+        {/* Mobile/Tablet Fallback for Left Panel: Ensure no internal scroll for mobile */}
+        <div className="lg:hidden w-full order-first">
+            <Card className="shadow-lg border-2 border-border/50 bg-card/80 backdrop-blur-sm rounded-xl mb-4">
+                <CardHeader className="pb-2">
+                  <CardTitle className="text-lg font-bold text-primary flex items-center gap-2">
+                    <span role="img" aria-label="upload">📤</span> Image & AI
+                  </CardTitle>
+                </CardHeader>
+                <CardContent className="space-y-5">
+                    <MemeUploader
+                        currentFile={file}
+                        previewUrl={previewUrl}
+                        onFileSelect={handleFileChange}
+                        onClear={handleClearImage}
+                    />
+                    <div className="pt-3 border-t border-border/50">
+                        <MemeControls
+                            file={file}
+                            isSmartMode={isSmartMode}
+                            setSmartMode={setIsSmartMode}
+                            onCaptionsGenerated={setAiCaptions}
+                            previewUrl={previewUrl}
+                            topText={topText}
+                            bottomText={bottomText}
+                            canvasRef={canvasRef}
+                            topTextStyle={topTextStyle}
+                            bottomTextStyle={bottomTextStyle}
+                        />
+                    </div>
+                </CardContent>
+            </Card>
+        </div>
 
-        {/* AI BUTTON: Primary action with a distinct gradient */}
-        <Button
-          onClick={handleGenerate}
-          disabled={loading || !file}
-          className="
-            w-full rounded-xl h-12 text-lg font-bold
-            shadow-lg shadow-primary/30 hover:shadow-xl hover:shadow-primary/40 
-            transition-all duration-300 
-            bg-gradient-to-r from-primary to-purple-500 text-white
-            disabled:bg-muted disabled:text-muted-foreground disabled:shadow-none
-          "
-        >
-          {loading ? (
-            <>
-              <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-              Thinking...
-            </>
-          ) : (
-            <>
-              <Wand2 className="mr-2 h-5 w-5" />
-              Generate Captions
-            </>
-          )}
-        </Button>
-
-        {/* DOWNLOAD BUTTON: Secondary action with a refined outline */}
-        <Button
-          onClick={handleDownload}
-          disabled={!previewUrl}
-          className="
-            w-full rounded-xl h-12 text-lg font-bold
-            shadow-md hover:shadow-lg transition-all duration-300 
-            border border-border/60 hover:border-primary/50
-          "
-          variant="outline"
-        >
-          <Download className="mr-2 h-5 w-5" />
-          Download Meme
-        </Button>
       </div>
     </div>
   );
